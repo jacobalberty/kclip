@@ -7,7 +7,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -77,51 +76,37 @@ func kclipCopy(dst io.Writer, src io.Reader) (int64, error) {
 	return io.Copy(pads, src)
 }
 
+// https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Functions-using-CSI-_-ordered-by-the-final-character_s_
 func getDA() (Pp, Pv, Pc int) {
-	var attr string
-	var reading bool
-
 	// disable input buffering
 	exec.Command("stty", "-F", "/dev/tty", "cbreak", "min", "1").Run()
 	// do not display entered characters on the screen
 	exec.Command("stty", "-F", "/dev/tty", "-echo").Run()
 	defer exec.Command("stty", "-F", "/dev/tty", "echo").Run()
-	fmt.Print("\033[>c")
 
-	var b []byte = make([]byte, 1)
+	// Send Device Attributes (Secondary DA)
+	if len(os.Getenv("TMUX")) > 0 {
+		// Running in tmux
+		fmt.Print("\033Ptmux;\033\033[>c\033\\")
+	} else if strings.HasPrefix(os.Getenv("TERM"), "screen") {
+		// running in GNU Screen
+		fmt.Print("\033P\033[>c\033\\")
+	} else {
+		fmt.Print("\033[>c")
+	}
+
+	// Make stdin non blocking
 	if err := syscall.SetNonblock(0, true); err != nil {
 		panic(err)
 	}
 	defer syscall.SetNonblock(0, false)
 	f := os.NewFile(0, "stdin")
+
+	// Set a timeout of half a second for reading from stdin
 	if err := f.SetDeadline(time.Now().Add(500 * time.Millisecond)); err != nil {
 		panic(err)
 	}
-rLoop:
-	for {
-		_, err := f.Read(b)
-		if err != nil {
-			break
-		}
-		switch b[0] {
-		case '[':
-		case '>':
-		case '\033':
-			reading = true
-		case 'c':
-			break rLoop
-		default:
-			if reading {
-				attr += string(b)
-			}
-		}
-	}
-	tmp := strings.Split(attr, ";")
-	if len(tmp) < 3 {
-		return 0, 0, 0
-	}
-	Pp, _ = strconv.Atoi(tmp[0])
-	Pv, _ = strconv.Atoi(tmp[1])
-	Pc, _ = strconv.Atoi(tmp[2])
+
+	fmt.Fscanf(f, "\033[>%d;%d;%dc", &Pp, &Pv, &Pc)
 	return
 }
