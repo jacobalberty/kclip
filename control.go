@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"strings"
+	"syscall"
+	"time"
 )
 
 type controlCollection map[string]Control
@@ -63,4 +66,50 @@ func (c controlCollection) Current(w io.Writer) io.Writer {
 func kclipCopy(dst io.Writer, src io.Reader) (int64, error) {
 	pads := cList.Current(dst)
 	return io.Copy(pads, src)
+}
+
+func getDA() (Pp, Pv, Pc string) {
+	var attr string
+	var reading bool
+
+	// disable input buffering
+	exec.Command("stty", "-F", "/dev/tty", "cbreak", "min", "1").Run()
+	// do not display entered characters on the screen
+	exec.Command("stty", "-F", "/dev/tty", "-echo").Run()
+	defer exec.Command("stty", "-F", "/dev/tty", "echo").Run()
+	fmt.Print("\033[>c")
+
+	var b []byte = make([]byte, 1)
+	if err := syscall.SetNonblock(0, true); err != nil {
+		panic(err)
+	}
+	defer syscall.SetNonblock(0, false)
+	f := os.NewFile(0, "stdin")
+	if err := f.SetDeadline(time.Now().Add(500 * time.Millisecond)); err != nil {
+		panic(err)
+	}
+rLoop:
+	for {
+		_, err := f.Read(b)
+		if err != nil {
+			break
+		}
+		switch b[0] {
+		case '[':
+		case '>':
+		case '\033':
+			reading = true
+		case 'c':
+			break rLoop
+		default:
+			if reading {
+				attr += string(b)
+			}
+		}
+	}
+	tmp := strings.Split(attr, ";")
+	if len(tmp) < 3 {
+		return "", "", ""
+	}
+	return tmp[0], tmp[1], tmp[2]
 }
