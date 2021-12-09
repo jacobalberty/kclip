@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -53,10 +54,18 @@ func (c controlEncoder) Write(p []byte) (n int, err error) {
 	return
 }
 
+func (c controlCollection) useOSC() bool {
+	_, Pv, _ := getDA()
+	return Pv >= 203
+}
+
 func (c controlCollection) Current(w io.Writer) io.Writer {
 	ce := controlEncoder{W: w}
-	ce.CList = append(ce.CList, c["print"])
-	//ce.CList = append(ce.CList, c["osc52"]) // TODO: Decide how to pick osc52 instead of print control
+	if c.useOSC() {
+		ce.CList = append(ce.CList, c["osc52"])
+	} else {
+		ce.CList = append(ce.CList, c["print"])
+	}
 	if len(os.Getenv("TMUX")) > 0 {
 		ce.CList = append(ce.CList, c["tmux"])
 	}
@@ -68,7 +77,7 @@ func kclipCopy(dst io.Writer, src io.Reader) (int64, error) {
 	return io.Copy(pads, src)
 }
 
-func getDA() (Pp, Pv, Pc string) {
+func getDA() (Pp, Pv, Pc int) {
 	var attr string
 	var reading bool
 
@@ -109,7 +118,10 @@ rLoop:
 	}
 	tmp := strings.Split(attr, ";")
 	if len(tmp) < 3 {
-		return "", "", ""
+		return 0, 0, 0
 	}
-	return tmp[0], tmp[1], tmp[2]
+	Pp, _ = strconv.Atoi(tmp[0])
+	Pv, _ = strconv.Atoi(tmp[1])
+	Pc, _ = strconv.Atoi(tmp[2])
+	return
 }
