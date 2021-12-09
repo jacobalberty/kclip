@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io"
 	"os"
 )
 
@@ -24,27 +23,4 @@ func main() {
 			}
 		}
 	}
-}
-
-func kclipCopy(dst io.Writer, src io.Reader) (int64, error) {
-	pads := padList.Current()
-	head := pads.Head
-	tail := pads.Tail
-	return copyPad(dst, src, head, tail)
-}
-
-func copyPad(dst io.Writer, src io.Reader, head, tail string) (written int64, err error) {
-	nw, err := io.WriteString(dst, head)
-	if err != nil {
-		return
-	}
-	written += int64(nw)
-	wtmp, err := io.Copy(dst, src)
-	written += wtmp
-	if err != nil {
-		return
-	}
-	nw, err = io.WriteString(dst, tail)
-	written += int64(nw)
-	return
 }
