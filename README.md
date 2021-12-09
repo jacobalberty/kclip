@@ -12,8 +12,8 @@ If you are using terminal with OSC 52 support this will attempt to automatically
 
 ## TODO (in no particular order)
 
-* Add a list of terminals that OSC 52 supports
+* Add a list of terminals that support OSC 52
 * Improve the robustness of OSC 52 detection
 * Add documentation for a workaround for PuTTY without the printer clipboard patch
 * Add chunking to OSC 52 and detect when we need to use it
-* Add a CLI option to force OSC 52 or printer mode
+* Add a CLI option (probably use an environment variable) to force OSC 52 or printer mode
