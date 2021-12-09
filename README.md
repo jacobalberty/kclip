@@ -9,3 +9,11 @@ To configure KiTTY for clipboard printing first pull up configuration or reconfi
 
 ## OSC 52
 If you are using terminal with OSC 52 support this will attempt to automatically detect that and use it instead. Clients like [nassh](https://chromium.googlesource.com/apps/libapps/+/master/nassh) support this.
+
+## TODO (in no particular order)
+
+* Add a list of terminals that OSC 52 supports
+* Improve the robustness of OSC 52 detection
+* Add documentation for a workaround for PuTTY without the printer clipboard patch
+* Add chunking to OSC 52 and detect when we need to use it
+* Add a CLI option to force OSC 52 or printer mode
