@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"strings"
 	"syscall"
 	"time"
@@ -78,11 +77,16 @@ func kclipCopy(dst io.Writer, src io.Reader) (int64, error) {
 
 // https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Functions-using-CSI-_-ordered-by-the-final-character_s_
 func getDA() (Pp, Pv, Pc int) {
-	// disable input buffering
-	exec.Command("stty", "-F", "/dev/tty", "cbreak", "min", "1").Run()
-	// do not display entered characters on the screen
-	exec.Command("stty", "-F", "/dev/tty", "-echo").Run()
-	defer exec.Command("stty", "-F", "/dev/tty", "echo").Run()
+	// Set terminal to raw mode
+	t := getTermios(os.Stdin.Fd())
+
+	origin := *t
+	defer func() {
+		setTermios(os.Stdin.Fd(), &origin)
+	}()
+
+	setRaw(t)
+	setTermios(os.Stdin.Fd(), t)
 
 	// Send Device Attributes (Secondary DA)
 	if len(os.Getenv("TMUX")) > 0 {
