@@ -6,3 +6,6 @@ This tool behaves like the `cat` command, it just tries to pad your content with
 
 ## Setup
 To configure KiTTY for clipboard printing first pull up configuration or reconfiguration. Then under the `Remote-controlled printing` section select `Windows clipboard` as your printer [see screenshot](doc/termcfg.png). Then install this tool on the remote system you want to copy to your clipboard from via `go install github.com/jacobalberty/kclip@latest`. Now use it as you would `cat` and instead of the files being output to your terminal they should output to your windows clipboard.
+
+## OSC 52
+If you are using terminal with OSC 52 support this will attempt to automatically detect that and use it instead. Clients like [nassh](https://chromium.googlesource.com/apps/libapps/+/master/nassh) support this.
