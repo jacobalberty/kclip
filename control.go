@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-type controlCollection map[string]Control
+type controlCollection map[string]control
 
 var cList = controlCollection{
 	"print": {"\033[5i%s\033[4i", nil, nil},
@@ -19,14 +19,14 @@ var cList = controlCollection{
 	"osc52": {"\033]52;c;%s\a", nil, base64.StdEncoding.EncodeToString},
 }
 
-type Control struct {
+type control struct {
 	CodeF string
 	EF    func(string) string
 	WF    func(src []byte) string
 }
 
 type controlEncoder struct {
-	CList []Control
+	CList []control
 	W     io.Writer
 }
 
