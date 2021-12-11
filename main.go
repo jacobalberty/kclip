@@ -1,12 +1,16 @@
 package main
 
 import (
+	"fmt"
+	"io"
 	"os"
+	"strings"
 )
 
 func main() {
+	clipboard := cList.Current(os.Stdout)
 	if len(os.Args) == 1 {
-		_, err := kclipCopy(os.Stdout, os.Stdin)
+		_, err := io.Copy(clipboard, os.Stdin)
 		if err != nil {
 			panic(err)
 		}
@@ -17,10 +21,11 @@ func main() {
 				panic(err)
 			}
 
-			_, err = kclipCopy(os.Stdout, fh)
+			_, err = io.Copy(clipboard, fh)
 			if err != nil {
 				panic(err)
 			}
 		}
 	}
+	fmt.Printf("Sending to clipboard via %s control codes\n", strings.Join(clipboard.SList, ","))
 }

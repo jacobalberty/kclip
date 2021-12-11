@@ -26,8 +26,14 @@ type control struct {
 }
 
 type controlEncoder struct {
+	SList []string
 	CList []control
 	W     io.Writer
+}
+
+func (c *controlEncoder) Add(s string, ct control) {
+	c.CList = append(c.CList, ct)
+	c.SList = append(c.SList, s)
 }
 
 func (c controlEncoder) Write(p []byte) (n int, err error) {
@@ -57,15 +63,15 @@ func (c controlCollection) useOSC() bool {
 	return Pv >= 203
 }
 
-func (c controlCollection) Current(w io.Writer) io.Writer {
+func (c controlCollection) Current(w io.Writer) controlEncoder {
 	ce := controlEncoder{W: w}
 	if c.useOSC() {
-		ce.CList = append(ce.CList, c["osc52"])
+		ce.Add("osc52", c["osc52"])
 	} else {
-		ce.CList = append(ce.CList, c["print"])
+		ce.Add("print", c["print"])
 	}
 	if len(os.Getenv("TMUX")) > 0 {
-		ce.CList = append(ce.CList, c["tmux"])
+		ce.Add("tmux", c["tmux"])
 	}
 	return ce
 }
